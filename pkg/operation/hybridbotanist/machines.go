@@ -226,6 +226,15 @@ func (b *HybridBotanist) generateMachineDeploymentConfig(existingMachineDeployme
 		}
 		existingMachineDeployment := getExistingMachineDeployment(existingMachineDeployments, deployment.Name)
 
+		// If the existing machine deployment has "freeze" label, then add that too
+		if existingMachineDeployment != nil {
+			if labels := existingMachineDeployment.GetLabels(); labels != nil {
+				if labels["freeze"] == "True" {
+					config["labels"].(map[string]interface{})["freeze"] = "True"
+				}
+			}
+		}
+
 		switch {
 		// If the Shoot is hibernated then the machine deployment's replicas should be zero.
 		case b.Shoot.Hibernated:
