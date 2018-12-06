@@ -16,6 +16,7 @@ package gcpbotanist
 
 import (
 	"fmt"
+
 	"github.com/gardener/gardener/pkg/operation"
 	"github.com/gardener/gardener/pkg/operation/common"
 	"github.com/gardener/gardener/pkg/operation/terraformer"
@@ -119,6 +120,17 @@ func (b *GCPBotanist) GenerateMachineConfig() ([]map[string]interface{}, operati
 					b.Shoot.SeedNamespace,
 					fmt.Sprintf("kubernetes-io-cluster-%s", b.Shoot.SeedNamespace),
 					"kubernetes-io-role-node",
+				},
+
+				"metadata": []map[string]interface{}{
+					{
+						"key":   "ssh-keys",
+						"value": string(b.Secrets["ssh-keypair"].Data["id_rsa.pub"]),
+					},
+					{
+						"key":   "enable-oslogin",
+						"value": "true",
+					},
 				},
 			}
 

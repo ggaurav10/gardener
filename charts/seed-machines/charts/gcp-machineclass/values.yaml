@@ -31,3 +31,6 @@ machineClasses:
     - https://www.googleapis.com/auth/compute
   tags:
   - my-nodes
+  metadata:
+  - key: "key"
+    value: "value"
