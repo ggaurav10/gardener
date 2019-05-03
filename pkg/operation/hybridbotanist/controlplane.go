@@ -31,6 +31,7 @@ import (
 	"github.com/gardener/gardener/pkg/utils"
 	kutil "github.com/gardener/gardener/pkg/utils/kubernetes"
 	"github.com/gardener/gardener/pkg/utils/secrets"
+	hvpa "github.com/gardener/hvpa-controller/pkg/apis/autoscaling/v1alpha1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -298,6 +299,8 @@ func (b *HybridBotanist) DeployKubeAPIServerService() error {
 // DeployKubeAPIServer asks the Cloud Botanist to provide the cloud specific configuration values for the
 // kube-apiserver deployment.
 func (b *HybridBotanist) DeployKubeAPIServer() error {
+	vpaEnabled := controllermanagerfeatures.FeatureGate.Enabled(features.VPA)
+
 	defaultValues := map[string]interface{}{
 		"etcdServicePort":   2379,
 		"kubernetesVersion": b.Shoot.Info.Spec.Kubernetes.Version,
@@ -327,7 +330,7 @@ func (b *HybridBotanist) DeployKubeAPIServer() error {
 			"checksum/secret-etcd-client-tls":           b.CheckSums["etcd-client-tls"],
 		},
 		"vpa": map[string]interface{}{
-			"enabled": controllermanagerfeatures.FeatureGate.Enabled(features.VPA),
+			"enabled": vpaEnabled,
 		},
 	}
 	cloudSpecificExposeValues, err := b.SeedCloudBotanist.GenerateKubeAPIServerExposeConfig()
@@ -354,9 +357,12 @@ func (b *HybridBotanist) DeployKubeAPIServer() error {
 			},
 		}
 	} else {
+		foundDeployment := true
 		deployment := &appsv1.Deployment{}
 		if err := b.K8sSeedClient.Client().Get(context.TODO(), kutil.Key(b.Shoot.SeedNamespace, common.KubeAPIServerDeploymentName), deployment); err != nil && !apierrors.IsNotFound(err) {
 			return err
+		} else if apierrors.IsNotFound(err) {
+			foundDeployment = false
 		}
 		replicas := deployment.Spec.Replicas
 
@@ -370,17 +376,51 @@ func (b *HybridBotanist) DeployKubeAPIServer() error {
 			defaultValues["replicas"] = 0
 		}
 
-		cpuRequest, memoryRequest, cpuLimit, memoryLimit := getResourcesForAPIServer(b.Shoot.GetNodeCount())
-		defaultValues["apiServerResources"] = map[string]interface{}{
-			"limits": map[string]interface{}{
-				"cpu":    cpuLimit,
-				"memory": memoryLimit,
-			},
-			"requests": map[string]interface{}{
-				"cpu":    cpuRequest,
-				"memory": memoryRequest,
-			},
+		if vpaEnabled == false || foundDeployment == false {
+			// If VPA is not enabled OR deployment is not already created,
+			// initialize the values
+			cpuRequest, memoryRequest, cpuLimit, memoryLimit := getResourcesForAPIServer(b.Shoot.GetNodeCount())
+			if vpaEnabled {
+				// Overwrite limit values if vpa is enabled
+				// as request values might exceed them
+				cpuLimit = "5"
+				memoryLimit = "10G"
+			}
+			defaultValues["apiServerResources"] = map[string]interface{}{
+				"limits": map[string]interface{}{
+					"cpu":    cpuLimit,
+					"memory": memoryLimit,
+				},
+				"requests": map[string]interface{}{
+					"cpu":    cpuRequest,
+					"memory": memoryRequest,
+				},
+			}
+		} else {
+			// Deployment is already created AND is controlled by VPA
+			// Keep the "resources" as it is.
+			for _, v := range deployment.Spec.Template.Spec.Containers {
+				if v.Name == "kube-apiserver" {
+					defaultValues["apiServerResources"] = v.Resources.DeepCopy()
+				} else if v.Name == "vpn-seed" {
+					defaultValues["vpnSeedResources"] = v.Resources.DeepCopy()
+				} else if v.Name == "blackbox-exporter" {
+					defaultValues["blackBoxExporterResources"] = v.Resources.DeepCopy()
+				}
+			}
 		}
+	}
+
+	maxReplicas, ok := defaultValues["maxReplicas"].(int)
+	if !ok {
+		return fmt.Errorf("Error converting maxReplicas '%v' to int", defaultValues["maxReplicas"])
+	}
+	// APIserver will be horizontally scaled until last but one replicas,
+	// after which there will be vertical scaling
+	if maxReplicas > 1 {
+		defaultValues["lastReplicaCountForHpa"] = maxReplicas - 1
+	} else {
+		defaultValues["lastReplicaCountForHpa"] = 1
 	}
 
 	var (
@@ -459,8 +499,17 @@ func (b *HybridBotanist) DeployKubeAPIServer() error {
 		return err
 	}
 
-	// If shoot is hibernated we don't want the HPA to interfer with our scaling decisions.
+	// If shoot is hibernated we don't want the HPA or HVPA to interfere with our scaling decisions.
 	if b.Shoot.IsHibernated {
+		apiserverHvpa := &hvpa.Hvpa{}
+		if err := b.K8sSeedClient.Client().Get(context.TODO(), kutil.Key(b.Shoot.SeedNamespace, common.KubeAPIServerDeploymentName), apiserverHvpa); err != nil && !apierrors.IsNotFound(err) {
+			return err
+		} else if err == nil {
+			err = b.K8sSeedClient.Client().Delete(context.TODO(), apiserverHvpa)
+			if err != nil {
+				return err
+			}
+		}
 		if err := b.K8sSeedClient.DeleteHorizontalPodAutoscaler(b.Shoot.SeedNamespace, common.KubeAPIServerDeploymentName); err != nil && !apierrors.IsNotFound(err) {
 			return err
 		}

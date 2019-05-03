@@ -558,6 +558,9 @@ const (
 
 	// VpaExporterImageName is the name of the vpa-exporter image
 	VpaExporterImageName = "vpa-exporter"
+
+	// HvpaControllerImageName is the name of the hvpa-controller image
+	HvpaControllerImageName = "hvpa-controller"
 )
 
 var (

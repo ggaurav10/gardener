@@ -84,5 +84,15 @@ targetAverageUtilization: 80
 auditConfig:
   auditPolicy: ""
 
+hpa:
+  enabled: false
+
 vpa:
   enabled: true
+
+hvpa:
+  enabled: true
+
+scaleUpStabilizationWindow: "3m"
+scaleDownStabilizationWindow: "15m"
+lastReplicaCountForHpa: 1
