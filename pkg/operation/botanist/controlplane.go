@@ -1076,7 +1076,8 @@ func (b *Botanist) DeployETCD(ctx context.Context) error {
 		"hvpa": map[string]interface{}{
 			"enabled": hvpaEnabled,
 		},
-		"storageCapacity": b.Seed.GetValidVolumeSize("10Gi"),
+		"maintenanceWindow": b.Shoot.Info.Spec.Maintenance.TimeWindow,
+		"storageCapacity":   b.Seed.GetValidVolumeSize("10Gi"),
 	}
 
 	etcd, err := b.InjectSeedShootImages(etcdConfig, common.ETCDImageName)
