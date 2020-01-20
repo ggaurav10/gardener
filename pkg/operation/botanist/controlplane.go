@@ -766,6 +766,10 @@ func (b *Botanist) DeployKubeAPIServer() error {
 			},
 		}
 	} else {
+		if b.ShootedSeed != nil {
+			// For seeds, set maxReplicas to 6
+			maxReplicas = 6
+		}
 		replicas := deployment.Spec.Replicas
 
 		// As kube-apiserver HPA manages the number of replicas, we have to maintain current number of replicas
