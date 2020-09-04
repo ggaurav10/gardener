@@ -55,7 +55,7 @@ hvpa:
   targetAverageUtilizationCpu: 80
   targetAverageUtilizationMemory: 80
 # maintenanceWindow: <time-window>
-  scaleUpStabilization:
+  scaleUpstabilization:
     stabilizationDuration: "5m"
     minChange:
       cpu:
@@ -64,7 +64,7 @@ hvpa:
       memory:
         value: 2G
         percentage: 80
-  scaleDownStabilization:
+  scaleDownstabilization:
     stabilizationDuration: "15m"
     minChange:
       cpu:
