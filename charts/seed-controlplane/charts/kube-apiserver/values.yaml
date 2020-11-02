@@ -121,16 +121,16 @@ apiAudiences:
 #  signingKey: <private key in PEM format>
 
 hvpa:
-  enabled: false
+  enabled: true
 
 scaleUpStabilization:
-  stabilizationDuration: "3m"
+  stabilizationDuration: "5m"
   minChange:
     cpu:
-      value: 300m
+      value: 500m
       percentage: 80
     memory:
-      value: 200M
+      value: 400M
       percentage: 80
 
 scaleDownStabilization:

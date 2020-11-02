@@ -45,7 +45,7 @@ sidecar:
 storageCapacity: 16Gi
 
 hvpa:
-  enabled: false
+  enabled: true
   maxAllowed:
     cpu: "4"
     memory: 30G
