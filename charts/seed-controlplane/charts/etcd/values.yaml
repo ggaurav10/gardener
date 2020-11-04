@@ -60,10 +60,8 @@ hvpa:
     minChange:
       cpu:
         value: "1"
-        percentage: 80
       memory:
         value: 2G
-        percentage: 80
   scaleDownstabilization:
     stabilizationDuration: "15m"
     minChange:
