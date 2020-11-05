@@ -127,10 +127,10 @@ scaleUpStabilization:
   stabilizationDuration: "5m"
   minChange:
     cpu:
-      value: 500m
+      value: 1000m
       percentage: 80
     memory:
-      value: 400M
+      value: 1000M
       percentage: 80
 
 scaleDownStabilization:
