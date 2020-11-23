@@ -29,12 +29,6 @@ spec:
       matchLabels:
         role: apiserver-hpa
     deploy: false
-    scaleUp:
-      updatePolicy:
-        updateMode: "Auto"
-    scaleDown:
-      updatePolicy:
-        updateMode: "Auto"
     template:
       metadata:
         labels:
@@ -80,20 +74,21 @@ spec:
               mode: "Off"
   scaleIntervals:
     - maxReplicas: 1
-      maxCpu: "0.5"
-      maxMemory: 2G
+      maxCpu: "0.4"
+      maxMemory: 1G
     - maxReplicas: 2
-      maxCpu: "1"
-      maxMemory: 4G
+      maxCpu: "0.6"
+      maxMemory: 1.5G
     - maxReplicas: 3
-      maxCpu: "2"
-      maxMemory: 8G
+      maxCpu: "0.8"
+      maxMemory: 2G
     - maxReplicas: 4
-      maxCpu: "4"
-      maxMemory: 16G
+      maxCpu: "1"
+      maxMemory: 2.75G
     - maxReplicas: 5
-      maxCpu: "8"
-      maxMemory: 32G
+      maxCpu: "1.5"
+      maxMemory: 4G
+    - maxReplicas: 6
   targetRef:
     apiVersion: {{ include "deploymentversion" . }}
     kind: Deployment

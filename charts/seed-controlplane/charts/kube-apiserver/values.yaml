@@ -124,7 +124,7 @@ hvpa:
   enabled: true
 
 scaleUpStabilization:
-  stabilizationDuration: "5m"
+  stabilizationDuration: "8m"
   minChange:
     cpu:
       value: 1000m
@@ -145,10 +145,10 @@ scaleDownStabilization:
 
 limitsRequestsGapScaleParams:
   cpu:
-    value: "1"
+    value: "2"
     percentage: 70
   memory:
-    value: "1G"
+    value: "2.5"
     percentage: 70
 
 sni:

@@ -55,14 +55,14 @@ hvpa:
   targetAverageUtilizationCpu: 80
   targetAverageUtilizationMemory: 80
 # maintenanceWindow: <time-window>
-  scaleUpstabilization:
+  scaleUpStabilization:
     stabilizationDuration: "5m"
     minChange:
       cpu:
         value: "1"
       memory:
         value: 2G
-  scaleDownstabilization:
+  scaleDownStabilization:
     stabilizationDuration: "15m"
     minChange:
       cpu:
@@ -73,8 +73,8 @@ hvpa:
         percentage: 80
   limitsRequestsGapScaleParams:
     cpu:
-      value: "1"
+      value: "2"
       percentage: 40
     memory:
-      value: "1G"
+      value: "3.5G"
       percentage: 40
